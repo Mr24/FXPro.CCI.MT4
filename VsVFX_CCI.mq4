@@ -16,7 +16,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright(c) 2016 -, VerysVery Inc. && Yoshio.Mr24"
 #property link      "https://github.com/VerysVery/MetaTrader4/"
-#property description "VsV.MT4.VsVFX_CCI - Ver.0.12.0.2  Update:2018.01.17"
+#property description "VsV.MT4.VsVFX_CCI - Ver.0.12.0.3  Update:2018.01.17"
 #property strict
 
 //--- Includes ---//
@@ -29,6 +29,7 @@
 //--- CCI : Color Setup ---//
 #property indicator_color1 LightSeaGreen
 #property indicator_color2 White
+#property indicator_color3 Gold
 /*
 #property indicator_color1 MediumSeaGreen //Green
 #property indicator_color2 Red            //SaddleBrown
@@ -61,11 +62,12 @@
 extern int TrendCCI_Period = 14;
 extern int EntryCCI_Period = 6;
 // (0.12.0.1.OK) extern int Trend_period = 2;
-// extern int CountBars = 1000;
+// extern int CountBars = 1440;
 
 //--- CCI : Buffer ---//
 double TrendCCI[];
 double EntryCCI[];
+double ZeroLine[];
 
 
 //+------------------------------------------------------------------+
@@ -74,8 +76,8 @@ double EntryCCI[];
 int OnInit(void)
 {
 //--- 1. Trend.CCI : Indicators
-	//--- 1 Addtional Buffer Used for Conting.
-	IndicatorBuffers( 2 );
+	//--- 3 Addtional Buffer Used for Conting.
+	IndicatorBuffers( 3 );
 
 	//*--- Check for Input Parameter
 	if(TrendCCI_Period <= 1)
@@ -86,13 +88,18 @@ int OnInit(void)
 
 	//*--- Trend.CCI Buffer
 	SetIndexDrawBegin( 0, TrendCCI_Period );
-	SetIndexStyle( 0, DRAW_LINE, STYLE_SOLID, 2 );
+	SetIndexStyle( 0, DRAW_LINE, STYLE_SOLID, 1 );
 	SetIndexBuffer( 0, TrendCCI );
 
 	//*--- Entry.CCI Buffer
-	SetIndexDrawBegin( 1, EntryCCI_Period );
-	SetIndexStyle( 1, DRAW_LINE, STYLE_SOLID, 2 );
+	SetIndexDrawBegin( 1, TrendCCI_Period );
+	SetIndexStyle( 1, DRAW_LINE, STYLE_SOLID, 1 );
 	SetIndexBuffer( 1, EntryCCI );
+
+	//*--- ZeroLine Buffer
+	SetIndexDrawBegin( 2, TrendCCI_Period );
+	SetIndexStyle( 2, DRAW_LINE, STYLE_SOLID, 1 );
+	SetIndexBuffer( 2, ZeroLine );
 	
 	//*--- Trend.CCI Lavel
 	string short_name;
@@ -152,6 +159,7 @@ int OnCalculate(const int rates_total,
 	{
 		TrendCCI[i] = iCCI( NULL, 0, TrendCCI_Period, PRICE_TYPICAL, i );
 		EntryCCI[i] = iCCI( NULL, 0, EntryCCI_Period, PRICE_TYPICAL, i );
+		ZeroLine[i] = 0;
 	}
 	/* (Ver.0.12.0.1.OK)
 		for( int i=limit-1; i>=0; i-- )
