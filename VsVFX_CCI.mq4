@@ -16,7 +16,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright(c) 2016 -, VerysVery Inc. && Yoshio.Mr24"
 #property link      "https://github.com/VerysVery/MetaTrader4/"
-#property description "VsV.MT4.VsVFX_CCI - Ver.0.12.0.5  Update:2018.01.17"
+#property description "VsV.MT4.VsVFX_CCI - Ver.0.12.0.6  Update:2018.01.17"
 #property strict
 
 //--- Includes ---//
@@ -188,9 +188,12 @@ int OnCalculate(const int rates_total,
 		cTimeBar[i] = 0;
 
 		if( TrendCCI[i]>0 && TrendCCI[i+1]<0 )
+		{
 			if( tDw > Trend_Period ) tUp=0;
+		}
 
 		if( TrendCCI[i]>0 )
+		{
 			if( tUp < Trend_Period )
 			{
 				cNoTrend[i] = TrendCCI[i];
@@ -202,12 +205,18 @@ int OnCalculate(const int rates_total,
 				tUp++;
 			}
 			if( tUp > Trend_Period )
+			{
 				cTrendUp[i] = TrendCCI[i];
+			}
+		}
 
 		if( TrendCCI[i]<0 && TrendCCI[i+1]>0 )
+		{
 			if( tUp > Trend_Period ) tDw=0;
+		}
 
 		if( TrendCCI[i]<0 )
+		{
 			if( tDw < Trend_Period )
 			{
 				cNoTrend[i] = TrendCCI[i];
@@ -219,7 +228,10 @@ int OnCalculate(const int rates_total,
 				tDw++;
 			}
 			if( tDw > Trend_Period )
+			{
 				cTrendDw[i] = TrendCCI[i];
+			}
+		}
 	}
 	/* (Ver.0.12.0.1.OK)
 		for( int i=limit-1; i>=0; i-- )
