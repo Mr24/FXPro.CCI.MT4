@@ -16,7 +16,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright(c) 2016 -, VerysVery Inc. && Yoshio.Mr24"
 #property link      "https://github.com/VerysVery/MetaTrader4/"
-#property description "VsV.MT4.VsVFX_CCI - Ver.0.12.0.4  Update:2018.01.17"
+#property description "VsV.MT4.VsVFX_CCI - Ver.0.12.0.5  Update:2018.01.17"
 #property strict
 
 //--- Includes ---//
@@ -32,15 +32,8 @@
 #property indicator_color7 Gold		// ZeroLine
 #property indicator_color1 MediumSeaGreen	// CCI.Trend.Up
 #property indicator_color2 Red			// CCI.Trend.Down
-/*
-#property indicator_color1 MediumSeaGreen //Green
-#property indicator_color2 Red            //SaddleBrown
-#property indicator_color3 DarkGray
-#property indicator_color4 Gold
-#property indicator_color5 DarkKhaki      //White
-#property indicator_color6 White          //Magenta
-#property indicator_color7 DarkKhaki
-*/
+#property indicator_color3 DarkGray		// CCI.No.Trend
+#property indicator_color4 Gold		// CCI.TimeBar
 
 //--- CCI : Level Setup ---//
 #property indicator_level1 350
@@ -72,7 +65,11 @@ double EntryCCI[];
 double ZeroLine[];
 double cTrendUp[];
 double cTrendDw[];
+double cNoTrend[];
+double cTimeBar[];
 int tUp, tDw;
+
+
 
 
 //+------------------------------------------------------------------+
@@ -81,8 +78,8 @@ int tUp, tDw;
 int OnInit(void)
 {
 //--- 1. Trend.CCI : Indicators
-	//--- 5 Addtional Buffer Used for Conting.
-	IndicatorBuffers( 5 );
+	//--- 7 Addtional Buffer Used for Conting.
+	IndicatorBuffers( 7 );
 
 	//*--- Check for Input Parameter
 	if(TrendCCI_Period <= 1)
@@ -115,6 +112,16 @@ int OnInit(void)
 	SetIndexDrawBegin( 1, TrendCCI_Period );
 	SetIndexStyle( 1, DRAW_HISTOGRAM, 0, 2 );
 	SetIndexBuffer( 1, cTrendDw );
+
+	//*--- CCI.No.Trend Buffer
+	SetIndexDrawBegin( 2, TrendCCI_Period );
+	SetIndexStyle( 2, DRAW_HISTOGRAM, 0, 2 );
+	SetIndexBuffer( 2, cNoTrend );
+
+	//*--- CCI.No.Trend Buffer
+	SetIndexDrawBegin( 3, TrendCCI_Period );
+	SetIndexStyle( 3, DRAW_HISTOGRAM, 0, 2 );
+	SetIndexBuffer( 3, cTimeBar );
 	
 	//*--- Trend.CCI Lavel
 	string short_name;
@@ -176,15 +183,24 @@ int OnCalculate(const int rates_total,
 		EntryCCI[i] = iCCI( NULL, 0, EntryCCI_Period, PRICE_TYPICAL, i );
 		ZeroLine[i] = 0;
 		cTrendUp[i] = 0;
+		cTrendDw[i] = 0;
+		cNoTrend[i] = 0;
+		cTimeBar[i] = 0;
 
 		if( TrendCCI[i]>0 && TrendCCI[i+1]<0 )
 			if( tDw > Trend_Period ) tUp=0;
 
 		if( TrendCCI[i]>0 )
 			if( tUp < Trend_Period )
+			{
+				cNoTrend[i] = TrendCCI[i];
 				tUp++;
+			}
 			if( tUp == Trend_Period )
+			{
+				cTimeBar[i] = TrendCCI[i];
 				tUp++;
+			}
 			if( tUp > Trend_Period )
 				cTrendUp[i] = TrendCCI[i];
 
@@ -193,9 +209,15 @@ int OnCalculate(const int rates_total,
 
 		if( TrendCCI[i]<0 )
 			if( tDw < Trend_Period )
+			{
+				cNoTrend[i] = TrendCCI[i];
 				tDw++;
+			}
 			if( tDw == Trend_Period )
+			{
+				cTimeBar[i] = TrendCCI[i];
 				tDw++;
+			}
 			if( tDw > Trend_Period )
 				cTrendDw[i] = TrendCCI[i];
 	}
