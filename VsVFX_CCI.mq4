@@ -16,7 +16,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright(c) 2016 -, VerysVery Inc. && Yoshio.Mr24"
 #property link      "https://github.com/VerysVery/MetaTrader4/"
-#property description "VsV.MT4.VsVFX_CCI - Ver.0.12.0.3  Update:2018.01.17"
+#property description "VsV.MT4.VsVFX_CCI - Ver.0.12.0.4  Update:2018.01.17"
 #property strict
 
 //--- Includes ---//
@@ -27,9 +27,11 @@
 #property indicator_buffers 7
 
 //--- CCI : Color Setup ---//
-#property indicator_color1 LightSeaGreen
-#property indicator_color2 White
-#property indicator_color3 Gold
+#property indicator_color5 LightSeaGreen	// Trend.CCI
+#property indicator_color6 White		// Entry.CCI
+#property indicator_color7 Gold		// ZeroLine
+#property indicator_color1 MediumSeaGreen	// CCI.Trend.Up
+#property indicator_color2 Red			// CCI.Trend.Down
 /*
 #property indicator_color1 MediumSeaGreen //Green
 #property indicator_color2 Red            //SaddleBrown
@@ -61,13 +63,16 @@
 //--- CCI : Parameter
 extern int TrendCCI_Period = 14;
 extern int EntryCCI_Period = 6;
-// (0.12.0.1.OK) extern int Trend_period = 2;
+extern int Trend_Period = 2;
 // extern int CountBars = 1440;
 
 //--- CCI : Buffer ---//
 double TrendCCI[];
 double EntryCCI[];
 double ZeroLine[];
+double cTrendUp[];
+double cTrendDw[];
+int tUp, tDw;
 
 
 //+------------------------------------------------------------------+
@@ -76,8 +81,8 @@ double ZeroLine[];
 int OnInit(void)
 {
 //--- 1. Trend.CCI : Indicators
-	//--- 3 Addtional Buffer Used for Conting.
-	IndicatorBuffers( 3 );
+	//--- 5 Addtional Buffer Used for Conting.
+	IndicatorBuffers( 5 );
 
 	//*--- Check for Input Parameter
 	if(TrendCCI_Period <= 1)
@@ -87,19 +92,29 @@ int OnInit(void)
 	}
 
 	//*--- Trend.CCI Buffer
-	SetIndexDrawBegin( 0, TrendCCI_Period );
-	SetIndexStyle( 0, DRAW_LINE, STYLE_SOLID, 1 );
-	SetIndexBuffer( 0, TrendCCI );
+	SetIndexDrawBegin( 4, TrendCCI_Period );
+	SetIndexStyle( 4, DRAW_LINE, STYLE_SOLID, 2 );
+	SetIndexBuffer( 4, TrendCCI );
 
 	//*--- Entry.CCI Buffer
-	SetIndexDrawBegin( 1, TrendCCI_Period );
-	SetIndexStyle( 1, DRAW_LINE, STYLE_SOLID, 1 );
-	SetIndexBuffer( 1, EntryCCI );
+	SetIndexDrawBegin( 5, TrendCCI_Period );
+	SetIndexStyle( 5, DRAW_LINE, STYLE_SOLID, 2 );
+	SetIndexBuffer( 5, EntryCCI );
 
 	//*--- ZeroLine Buffer
-	SetIndexDrawBegin( 2, TrendCCI_Period );
-	SetIndexStyle( 2, DRAW_LINE, STYLE_SOLID, 1 );
-	SetIndexBuffer( 2, ZeroLine );
+	SetIndexDrawBegin( 6, TrendCCI_Period );
+	SetIndexStyle( 6, DRAW_LINE, STYLE_SOLID, 1 );
+	SetIndexBuffer( 6, ZeroLine );
+
+	//*--- CCI.Trend.Up Buffer
+	SetIndexDrawBegin( 0, TrendCCI_Period );
+	SetIndexStyle( 0, DRAW_HISTOGRAM, 0, 2 );
+	SetIndexBuffer( 0, cTrendUp );
+
+	//*--- CCI.Trend.Down Buffer
+	SetIndexDrawBegin( 1, TrendCCI_Period );
+	SetIndexStyle( 1, DRAW_HISTOGRAM, 0, 2 );
+	SetIndexBuffer( 1, cTrendDw );
 	
 	//*--- Trend.CCI Lavel
 	string short_name;
@@ -160,6 +175,29 @@ int OnCalculate(const int rates_total,
 		TrendCCI[i] = iCCI( NULL, 0, TrendCCI_Period, PRICE_TYPICAL, i );
 		EntryCCI[i] = iCCI( NULL, 0, EntryCCI_Period, PRICE_TYPICAL, i );
 		ZeroLine[i] = 0;
+		cTrendUp[i] = 0;
+
+		if( TrendCCI[i]>0 && TrendCCI[i+1]<0 )
+			if( tDw > Trend_Period ) tUp=0;
+
+		if( TrendCCI[i]>0 )
+			if( tUp < Trend_Period )
+				tUp++;
+			if( tUp == Trend_Period )
+				tUp++;
+			if( tUp > Trend_Period )
+				cTrendUp[i] = TrendCCI[i];
+
+		if( TrendCCI[i]<0 && TrendCCI[i+1]>0 )
+			if( tUp > Trend_Period ) tDw=0;
+
+		if( TrendCCI[i]<0 )
+			if( tDw < Trend_Period )
+				tDw++;
+			if( tDw == Trend_Period )
+				tDw++;
+			if( tDw > Trend_Period )
+				cTrendDw[i] = TrendCCI[i];
 	}
 	/* (Ver.0.12.0.1.OK)
 		for( int i=limit-1; i>=0; i-- )
